@@ -11,13 +11,12 @@
 </template>
 
 <script>
-import LoginCard from '@/views/login/LoginCard'
+import LoginCard from '@/views/login/LoginCard';
 import { clearAllIntervals } from '@/utils/clearAllIntervals';
 export default {
   name: 'Login',
-  data () {
-    return {
-    }
+  data() {
+    return {};
   },
 
   components: {
@@ -28,16 +27,28 @@ export default {
 
   created() {},
 
-  mounted () {
-    clearAllIntervals()
+  mounted() {
+    clearAllIntervals();
+    this.closeAllModal();
   },
 
-  methods: {}
-}
+  methods: {
+    //删除所有遮罩层
+    closeAllModal() {
+      let modalList = document.getElementsByClassName('v-modal');
+
+      for (let item of modalList) {
+        let parent = item.parentElement;
+        //删除节点
+        parent.removeChild(item);
+      }
+    },
+  },
+};
 </script>
 
-<style lang='less' scoped>
-.login{
+<style lang="less" scoped>
+.login {
   width: 100%;
   height: 100%;
   background: url(/img/login/bg-login.png) no-repeat center / cover;

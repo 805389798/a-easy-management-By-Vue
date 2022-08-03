@@ -40,6 +40,7 @@
           <el-button
             class="img"
             @click="getCaptcha"
+            v-loading="loading"
             style="
             border:0;
             margin:0;
@@ -73,6 +74,7 @@ export default {
       },
       //验证码
       code: '',
+      loading: false,
       //验证码的uuid
       uuid: '',
       img: '',
@@ -97,11 +99,13 @@ export default {
   methods: {
     //获取验证码
     getCaptcha() {
+      this.loading = true;
       this.$API
         .captcha()
         .then(res => {
           this.img = 'data:image/jpg;base64,' + res.data.img;
           this.uuid = res.data.uuid;
+          this.loading = false;
         })
         .catch(err => {
           console.log(err.data);
@@ -112,10 +116,13 @@ export default {
     login() {
       this.$refs.loginForm.validate(valid => {
         let data = {
-          code: this.code,
+          code: this.code.trim(),
           uuid: this.uuid,
         };
-        Object.assign(data, this.user);
+        //加密
+        let user = JSON.parse(JSON.stringify(this.user));
+        user.password = this.$Base64.encode(user.password);
+        Object.assign(data, user);
         return valid ? this.loginPost(data) : false;
       });
     },
@@ -147,12 +154,19 @@ export default {
 
     //保存用户名和密码
     setUserInfo() {
-      this.checkUserInfo() ? localStorage.setItem('user_info', JSON.stringify(this.user)) : '';
+      let user = JSON.parse(JSON.stringify(this.user));
+      if (user && user.password) {
+        user.password = this.$Base64.encode(user.password) || '';
+      }
+      this.checkUserInfo() ? localStorage.setItem('user_info', JSON.stringify(user)) : '';
     },
 
     //获取用户名和密码
     getUserInfo() {
       let user = JSON.parse(localStorage.getItem('user_info'));
+      if (user && user.password) {
+        user.password = this.$Base64.decode(user.password) || '';
+      }
       this.user = user || { username: '', password: '' };
       user ? (this.checked = true) : (this.checked = false);
     },

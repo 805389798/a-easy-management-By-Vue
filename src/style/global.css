@@ -118,3 +118,61 @@
 .el-dialog .el-dialog__footer {
   border-top: 1px solid #e5e5e5;
 }
+
+.sub_menu {
+  background: #7b80e3;
+  color: #fff;
+  padding: 0;
+  width: 100px !important;
+  min-width: 100px !important;
+}
+
+.sub_menu .el-button {
+  background: #7b80e3;
+  width: 100%;
+  padding: 10px 0;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+}
+
+.sub_menu .el-button .name {
+  color: #fff;
+}
+
+.sub_menu .el-button :hover {
+  background: #656acb;
+}
+
+.icon_select {
+  width: 600px !important;
+  min-width: 600px !important;
+  max-height: 400px !important;
+  overflow-y: auto;
+}
+.icon_select .el-popover__title{
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.icon_select .el-button {
+  margin: 10px 4px;
+}
+
+.icon_select .icon_container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.icon_select .icon_container .icon_search_field {
+  width: 100%;
+  margin: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+}

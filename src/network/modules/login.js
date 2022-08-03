@@ -15,3 +15,8 @@ export function logout() {
 export function captcha() {
   return axios.post(`${base.current}/sys/captchaImage`);
 }
+
+//判断token是否过期
+export function isToken() {
+  return axios.get(`${base.current}/sys/getToken`);
+}

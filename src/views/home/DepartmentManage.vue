@@ -40,6 +40,7 @@
         :data="tableData"
         style="width: 100%;"
         height="calc(100vh - 340px)"
+        :show-overflow-tooltip="true"
         :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
         :tree-props="{ children: 'children' }"
       >
@@ -131,7 +132,7 @@
             <el-input clearable v-model="addOrUpdateData.departmentNumber"></el-input>
           </el-form-item>
           <el-form-item class="form_item radio_form" prop="status" label="部门状态" style="padding-left: 0;">
-            <el-radio-group v-model="addOrUpdateData.status" class="radio_group">
+            <el-radio-group v-model="addOrUpdateData.status">
               <el-radio :label="0"><span>禁用</span></el-radio>
               <el-radio :label="1"><span>启用</span></el-radio>
             </el-radio-group>
@@ -197,7 +198,7 @@ export default {
         departmentID: '',
         //不检验
         departmentNumber: '',
-        status: 0,
+        status: 1,
       },
 
       //删除弹窗
@@ -228,6 +229,7 @@ export default {
 
   mounted() {
     this.getDepartmentInfo();
+    this.getTreeList();
   },
 
   methods: {
@@ -303,13 +305,8 @@ export default {
 
     //获取树形下拉框的数据
     getTreeList() {
-      let data = {
-        departmentName: '',
-        status: '',
-        departmentNumber: '',
-      };
       this.$API
-        .getDepartment(data)
+        .getDepartmentTree()
         .then(res => {
           this.treeList = res.data.data;
         })
@@ -320,7 +317,6 @@ export default {
 
     //展示新增框
     showAdd() {
-      this.getTreeList();
       this.addOrUpdateDialog = true;
       this.isAdding = true;
       this.addOrUpdateTitle = '新增';
@@ -328,11 +324,10 @@ export default {
 
     //展示编辑框
     showEdit(row) {
-      this.getTreeList();
       this.addOrUpdateDialog = true;
       this.isAdding = false;
       this.addOrUpdateTitle = '编辑';
-      this.addOrUpdateData = row;
+      this.addOrUpdateData = JSON.parse(JSON.stringify(row));
       this.addOrUpdateData.departmentParentId == 0 ? (this.addOrUpdateData.departmentParentId = '') : '';
     },
 
@@ -366,15 +361,15 @@ export default {
         departmentID: '',
         //不检验
         departmentNumber: '',
-        status: 0,
+        status: 1,
       };
-      this.$refs['addOrUpdateDialog'].resetFields();
+      this.$refs.addOrUpdateDialog.resetFields();
       this.getDepartmentInfo();
     },
 
     //显示删除弹窗
     showDelete(row) {
-      this.curDepartment = row;
+      this.curDepartment = JSON.parse(JSON.stringify(row));
       this.deleteDialog = true;
     },
 

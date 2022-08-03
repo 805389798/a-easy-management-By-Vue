@@ -21,3 +21,13 @@ export function updateMenu(params) {
 export function deleteMenu(params) {
   return axios.post(`${base.current}/sys/menu/deleteMenuInfo/${params}`);
 }
+
+//获取权限菜单列表
+export function getPermissionMenuList(params) {
+  return axios.get(`${base.current}/sys/menu/getPermissionsInfo`, { params: params });
+}
+
+//获取菜单树形结构
+export function getMenuTree() {
+  return axios.get(`${base.current}/sys/menu/getTreeStructure`);
+}

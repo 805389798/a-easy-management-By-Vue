@@ -46,6 +46,7 @@
         @selection-change="changeBtnState"
         style="width: 100%;"
         height="calc(100vh - 400px)"
+        :show-overflow-tooltip="true"
         :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
       >
         <el-table-column type="selection" min-width="50" align="center"></el-table-column>
@@ -132,7 +133,7 @@
           </el-form-item>
         </el-form>
 
-        <el-radio-group v-model="addOrUpdateData.radio" class="radio_group">
+        <el-radio-group v-model="addOrUpdateData.radio">
           <el-radio :label="0"><span>禁用</span></el-radio>
           <el-radio :label="1"><span>启用</span></el-radio>
         </el-radio-group>
@@ -183,7 +184,13 @@
 
       <!-- 字段表格区域 -->
       <div class="edit_table">
-        <el-table :data="fieldData" style="width: 100%;" height="300px" :header-cell-style="{ background: '#F0F0F0', color: '#333333' }">
+        <el-table
+          :show-overflow-tooltip="true"
+          :data="fieldData"
+          style="width: 100%;"
+          height="300px"
+          :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
+        >
           <el-table-column fixed type="index" label="序号" min-width="80"></el-table-column>
           <el-table-column prop="fieldName" label="字段名称" min-width="120">
             <template slot-scope="scope">
@@ -261,7 +268,7 @@
           </el-form-item>
         </el-form>
 
-        <el-radio-group v-model="fieldAddOrUpdateData.radio" class="radio_group">
+        <el-radio-group v-model="fieldAddOrUpdateData.radio">
           <el-radio :label="0"><span>禁用</span></el-radio>
           <el-radio :label="1"><span>启用</span></el-radio>
         </el-radio-group>
@@ -373,7 +380,7 @@ export default {
           fieldName: '',
           fieldValue: '',
         },
-        radio: 0,
+        radio: 1,
         remark: '',
       },
 
@@ -382,7 +389,7 @@ export default {
       addOrUpdateTitle: '新增',
       addOrUpdateData: {
         id: '',
-        radio: 0,
+        radio: 1,
         ruleForm: {
           dictionaryName: '',
           dictionaryType: '',
@@ -587,7 +594,7 @@ export default {
       this.fieldTitle = '编辑';
       this.fieldDialog = true;
       this.isAddingField = false;
-      let data = row;
+      let data = JSON.parse(JSON.stringify(row));
       this.fieldAddOrUpdateData.id = data.id;
       this.fieldAddOrUpdateData.radio = data.status;
       this.fieldAddOrUpdateData.ruleForm.fieldValue = data.fieldValue;
@@ -607,7 +614,7 @@ export default {
       this.isAdding = false;
       this.addOrUpdateTitle = '编辑';
       this.addOrUpdateDialog = true;
-      let data = row;
+      let data = JSON.parse(JSON.stringify(row));
       this.addOrUpdateData.id = data.id;
       this.addOrUpdateData.radio = data.status;
       this.addOrUpdateData.ruleForm.dictionaryType = data.dictionaryType;
@@ -641,13 +648,13 @@ export default {
     //显示字段删除弹窗
     showFieldDelete(row) {
       this.deleteFieldDialog = true;
-      this.curField = row;
+      this.curField = JSON.parse(JSON.stringify(row));
     },
 
     //新增和编辑框退出时调用
     handleClose() {
       this.addOrUpdateData = {
-        radio: 0,
+        radio: 1,
         ruleForm: {
           dictionaryName: '',
           dictionaryType: '',
@@ -657,7 +664,7 @@ export default {
       this.addOrUpdateDialog = false;
       this.addOrUpdateTitle = '新增';
       this.isAdding = true;
-      this.$refs['addOrUpdateDialog'].resetFields();
+      this.$refs.addOrUpdateDialog.resetFields();
       this.getDictionaryInfo();
     },
 
@@ -668,10 +675,10 @@ export default {
           fieldName: '',
           fieldValue: '',
         },
-        radio: 0,
+        radio: 1,
         remark: '',
       };
-      this.$refs['fieldDialog'].resetFields();
+      this.$refs.fieldDialog.resetFields();
       this.getFieldInfo();
     },
 
@@ -680,7 +687,7 @@ export default {
       this.fieldDialog = false;
       this.addOrUpdateTitle = '新增';
       this.isAddingField = true;
-      this.$refs['fieldDialog'].resetFields();
+      this.$refs.fieldDialog.resetFields();
       this.getFieldInfo();
     },
 

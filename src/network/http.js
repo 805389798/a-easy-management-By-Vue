@@ -11,7 +11,7 @@ import router from '@/router';
  */
 const toLogin = () => {
   router.replace({
-    path: '/login',
+    path: '/login'
     // query: {
     //   redirect: router.currentRoute.fullPath,
     // },

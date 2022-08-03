@@ -41,6 +41,7 @@
         :data="tableData"
         style="width: 100%;"
         height="calc(100vh - 340px)"
+        :show-overflow-tooltip="true"
         :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
         :tree-props="{ children: 'children' }"
       >
@@ -91,7 +92,7 @@
     >
       <div class="dialog_body">
         <el-form ref="addOrUpdateDialog" class="form" :rules="rules" :model="addOrUpdateData">
-          <el-form-item prop="postParentId" label="上级部门" class="form_item" style="padding-left: 0;">
+          <el-form-item prop="postParentId" label="上级岗位" class="form_item" style="padding-left: 0;">
             <Treeselect v-model="addOrUpdateData.postParentId" :options="treeList" :normalizer="normalizer" placeholder="根目录">
               <div v-if="addOrUpdateData.postParentId != ''" slot="value-label" slot-scope="{ node }">{{ node.label }}</div>
               <span v-else>根目录</span>
@@ -110,7 +111,7 @@
           </el-form-item>
 
           <el-form-item class="form_item radio_form" prop="status" label="岗位状态" style="padding-left: 0;">
-            <el-radio-group v-model="addOrUpdateData.status" class="radio_group">
+            <el-radio-group v-model="addOrUpdateData.status">
               <el-radio :label="0"><span>禁用</span></el-radio>
               <el-radio :label="1"><span>启用</span></el-radio>
             </el-radio-group>
@@ -206,7 +207,7 @@ export default {
         postLevel: '',
         //不检验
         postParentId: '',
-        status: 0,
+        status: 1,
       },
       addOrUpdateDialog: false,
       addOrUpdateTitle: '新增',
@@ -232,6 +233,7 @@ export default {
 
   mounted() {
     this.getPostInfo();
+    this.getTreeList();
   },
 
   methods: {
@@ -241,9 +243,18 @@ export default {
         .getPost(this.searchText)
         .then(res => {
           this.tableData = res.data.data || [];
-          if (this.$isEmpty(this.searchText)) {
-            this.treeList = res.data.data || [];
-          }
+        })
+        .catch(err => {
+          this.$msg(err.data);
+        });
+    },
+
+    //获取下拉选择框数据
+    getTreeList() {
+      this.$API
+        .getPostTree()
+        .then(res => {
+          this.treeList = res.data.data || [];
         })
         .catch(err => {
           this.$msg(err.data);
@@ -308,23 +319,6 @@ export default {
         });
     },
 
-    //获取下拉选择框数据
-    getTreeList() {
-      let data = {
-        postCode: '',
-        postName: '',
-        status: '',
-      };
-      this.$API
-        .getPost(data)
-        .then(res => {
-          this.treeList = res.data.data;
-        })
-        .catch(err => {
-          this.$msg(err.data);
-        });
-    },
-
     //显示新增弹窗
     showAdd() {
       this.addOrUpdateDialog = true;
@@ -337,7 +331,7 @@ export default {
       this.addOrUpdateDialog = true;
       this.isAdding = false;
       this.addOrUpdateTitle = '编辑';
-      this.addOrUpdateData = row;
+      this.addOrUpdateData = JSON.parse(JSON.stringify(row));
       this.addOrUpdateData.postParentId == 0 ? (this.addOrUpdateData.postParentId = '') : '';
     },
 
@@ -371,7 +365,7 @@ export default {
         postLevel: '',
         //不检验
         postParentId: '',
-        status: 0,
+        status: 1,
       };
       this.$refs.addOrUpdateDialog.resetFields();
       this.getPostInfo();

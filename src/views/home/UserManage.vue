@@ -14,7 +14,7 @@
         <el-input clearable placeholder="请输入" v-model="searchText.userName"></el-input>
       </div>
       <div class="search">
-        <span>工号搜索</span>
+        <span>工号</span>
         <el-input clearable placeholder="请输入" v-model="searchText.workId"></el-input>
       </div>
       <div class="search">
@@ -75,6 +75,7 @@
         :data="tableData"
         style="width: 100%;"
         height="calc(100vh - 460px)"
+        :show-overflow-tooltip="true"
         :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
       >
         <el-table-column type="selection" width="50" align="center"></el-table-column>
@@ -207,7 +208,7 @@
             <el-input clearable placeholder="请输入登录账号" v-model="addOrUpdateData.account"></el-input>
           </el-form-item>
           <el-form-item v-if="isAdding" prop="password" label="用户密码" class="form_item">
-            <el-input clearable placeholder="请输入用户密码" v-model="addOrUpdateData.password"></el-input>
+            <el-input clearable show-password placeholder="请输入用户密码" v-model="addOrUpdateData.password"></el-input>
           </el-form-item>
           <el-form-item prop="userType" label="用户类型" class="form_item">
             <el-select :disabled="true" clearable v-model="addOrUpdateData.userType" placeholder="请选择" style="width:100%;">
@@ -258,7 +259,7 @@
             ></treeselect>
           </el-form-item>
           <el-form-item prop="status" label="状态" class="form_item">
-            <el-radio-group v-model="addOrUpdateData.status" class="radio_group" style="width:100%;">
+            <el-radio-group v-model="addOrUpdateData.status" style="width:100%;">
               <el-radio :label="0"><span>禁用</span></el-radio>
               <el-radio :label="1"><span>启用</span></el-radio>
             </el-radio-group>
@@ -312,10 +313,10 @@
       <div class="reset_dialog">
         <el-form ref="resetDialog" class="form" :rules="passwordRules" :model="resetingUser">
           <el-form-item prop="password" label="新密码" class="form_item">
-            <el-input clearable placeholder="请输入新密码" v-model="resetingUser.password"></el-input>
+            <el-input clearable show-password placeholder="请输入新密码" v-model="resetingUser.password"></el-input>
           </el-form-item>
           <el-form-item prop="confirmPassword" label="确认密码" class="form_item">
-            <el-input clearable placeholder="请确认密码" v-model="resetingUser.confirmPassword"></el-input>
+            <el-input clearable show-password placeholder="请确认密码" v-model="resetingUser.confirmPassword"></el-input>
           </el-form-item>
         </el-form>
       </div>
@@ -424,7 +425,7 @@ export default {
         departmentId: null,
         postId: null,
         deputyPostIds: [],
-        status: 0,
+        status: 1,
         //备注
         remark: '',
       },
@@ -543,19 +544,17 @@ export default {
 
     //获取角色信息列表
     getRoleList() {
-      let data = {
-        status: 1,
-      };
       this.$API
-        .getRole(data)
+        .getRoleTree()
         .then(res => {
-          this.rolesOptions = res.data.data;
+          this.rolesOptions = res.data.data || [];
         })
         .catch(err => {});
     },
 
     //新增用户
     addUserInfo(data) {
+      data.password = this.$Base64.encode(data.password);
       let form = new FormData();
       form.append('userVoString', JSON.stringify(data));
       form.append('file', this.curFile);
@@ -614,15 +613,10 @@ export default {
 
     //获取部门信息列表
     getDepartmentInfo() {
-      let data = {
-        departmentName: '',
-        status: '',
-        departmentNumber: '',
-      };
       this.$API
-        .getDepartment(data)
+        .getDepartmentTree()
         .then(res => {
-          this.departmentList = res.data.data;
+          this.departmentList = res.data.data || [];
         })
         .catch(err => {
           this.$msg(err.data);
@@ -631,15 +625,10 @@ export default {
 
     //获取岗位信息列表
     getPostInfo() {
-      let data = {
-        postCode: '',
-        postName: '',
-        status: '',
-      };
       this.$API
-        .getPost(data)
+        .getPostTree()
         .then(res => {
-          this.postList = res.data.data;
+          this.postList = res.data.data || [];
         })
         .catch(err => {
           this.$msg(err.data);
@@ -666,7 +655,7 @@ export default {
       this.addOrUpdateDialog = true;
       this.isAdding = false;
       this.addOrUpdateTitle = '编辑';
-      this.addOrUpdateData = row;
+      this.addOrUpdateData = JSON.parse(JSON.stringify(row));
       if (this.addOrUpdateData.avatar) {
         let data = {
           name: this.addOrUpdateData.imgName,
@@ -704,7 +693,7 @@ export default {
         departmentId: null,
         postId: null,
         deputyPostIds: [],
-        status: 0,
+        status: 1,
         //备注
         remark: '',
       };
@@ -721,7 +710,7 @@ export default {
 
     //展示删除框
     showDelete(row) {
-      this.curUser = row;
+      this.curUser = JSON.parse(JSON.stringify(row));
       this.deleteDialog = true;
     },
 
@@ -763,7 +752,8 @@ export default {
         id: '',
       };
       this.resetDialog = false;
-      this.$refs['resetDialog'].resetFields();
+      this.$refs.resetDialog.resetFields();
+      this.getUserList();
     },
 
     //确认重置密码
@@ -778,13 +768,12 @@ export default {
       if (user.password == user.confirmPassword) {
         let data = {
           id: user.id,
-          password: user.password,
+          password: this.$Base64.encode(user.password),
         };
         this.$API
           .updateUserPassword(data)
           .then(res => {
             this.resetDialog = false;
-            this.getUserList();
             this.$msg(res.data);
           })
           .catch(err => {

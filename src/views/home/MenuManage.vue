@@ -21,7 +21,7 @@
       </div>
       <div class="search_btn">
         <el-button @click="clearSearchText"><span>重置</span></el-button>
-        <el-button type="primary"><span>查询</span></el-button>
+        <el-button @click="getMenuList" type="primary"><span>查询</span></el-button>
       </div>
     </div>
 
@@ -36,17 +36,31 @@
         row-key="id"
         :data="tableData"
         style="width: 100%;"
+        :show-overflow-tooltip="true"
         height="calc(100vh - 340px)"
         :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
         :tree-props="{ children: 'children' }"
       >
         <el-table-column type="selection" width="50" align="center"></el-table-column>
         <el-table-column fixed type="index" label="序号" width="80"></el-table-column>
-        <el-table-column fixed prop="menuName" label="菜单名称" width="280"></el-table-column>
-        <el-table-column fixed prop="menuType" label="菜单类型" width="120"></el-table-column>
+        <el-table-column fixed prop="menuName" label="菜单名称" width="200"></el-table-column>
+        <el-table-column fixed prop="menuType" label="菜单类型" width="120">
+          <template slot-scope="scope">
+            <el-tag v-show="scope.row.menuType == '' || scope.row.menuType == undefined" type="success">菜单</el-tag>
+            <el-tag v-show="scope.row.menuType == 0">目录</el-tag>
+            <el-tag v-show="scope.row.menuType == 1" type="success">菜单</el-tag>
+            <el-tag v-show="scope.row.menuType == 2" type="info">按钮</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column fixed prop="applicationId" label="应用名称" width="120"></el-table-column>
-        <el-table-column prop="authorityID" label="权限标识" width="300"></el-table-column>
-        <el-table-column prop="menuIcon" label="菜单图标" width="180"></el-table-column>
+        <el-table-column prop="authorityID" label="权限标识" width="180"></el-table-column>
+        <el-table-column prop="menuIcon" label="菜单图标" width="100" align="center">
+          <template slot-scope="scope">
+            <el-tag v-show="scope.row.menuIcon">
+              <i :class="scope.row.menuIcon"></i>
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="componentPath" label="组件路径" width="180"></el-table-column>
         <el-table-column prop="status" label="状态" width="180">
           <template slot-scope="scope">
@@ -73,11 +87,66 @@
     </div>
 
     <!-- 新增和编辑弹窗 -->
-    <el-dialog :title="addOrUpdateTitle" :visible.sync="addOrUpdateDialog" width="50%" @close="handleClose">
-      <span>这是一段信息</span>
+    <el-dialog
+      class="padding"
+      :title="addOrUpdateTitle"
+      :visible.sync="addOrUpdateDialog"
+      width="60%"
+      @close="handleClose"
+      :close-on-click-modal="false"
+      :destroy-on-close="true"
+    >
+      <div class="dialog_body">
+        <el-form ref="addOrUpdateDialog" class="form" :rules="rules" :model="addOrUpdateData">
+          <el-form-item prop="applicationId" label="应用名称" class="form_item">
+            <el-select clearable v-model="addOrUpdateData.applicationId" placeholder="请选择" style="width:100%;">
+              <el-option v-for="item in applicationOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item prop="menuParentId" label="上级菜单" class="form_item">
+            <Treeselect v-model="addOrUpdateData.menuParentId" :options="treeList" :normalizer="normalizer" placeholder="根目录">
+              <div v-if="addOrUpdateData.menuParentId != ''" slot="value-label" slot-scope="{ node }">{{ node.label }}</div>
+              <span v-else>根目录</span>
+            </Treeselect>
+          </el-form-item>
+          <el-form-item prop="menuName" label="菜单名称" class="form_item">
+            <el-input clearable v-model="addOrUpdateData.menuName" placeholder="请输入"></el-input>
+          </el-form-item>
+          <el-form-item prop="routingPath" label="路由地址" class="form_item">
+            <el-input clearable v-model="addOrUpdateData.routingPath" placeholder="请输入"></el-input>
+          </el-form-item>
+          <el-form-item prop="componentPath" label="组件路径" class="form_item">
+            <el-input clearable v-model="addOrUpdateData.componentPath" placeholder="请输入"></el-input>
+          </el-form-item>
+          <el-form-item prop="authorityID" label="权限字符" class="form_item">
+            <el-input clearable v-model="addOrUpdateData.authorityID" placeholder="请输入"></el-input>
+          </el-form-item>
+          <el-form-item prop="menuWeight" label="菜单权重" class="form_item form_number">
+            <el-input-number controls-position="right" v-model="addOrUpdateData.menuWeight" placeholder="请选择" :min="1"></el-input-number>
+          </el-form-item>
+          <el-form-item prop="status" label="显示状态" class="form_item radio_form">
+            <el-radio-group v-model="addOrUpdateData.showStatus">
+              <el-radio :label="0"><span>隐藏</span></el-radio>
+              <el-radio :label="1"><span>显示</span></el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item prop="status" label="菜单状态" class="form_item radio_form">
+            <el-radio-group v-model="addOrUpdateData.status">
+              <el-radio :label="0"><span>禁用</span></el-radio>
+              <el-radio :label="1"><span>启用</span></el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item prop="menuIcon" label="菜单图标" class="form_icon">
+            <div class="flex">
+              <IconSelect @mySelect="handleSelect" :selectName="addOrUpdateData.menuIcon"></IconSelect>
+              <el-input v-model="addOrUpdateData.menuIcon" disabled></el-input>
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button @click="addOrUpdateDialog = false">取 消</el-button>
+        <el-button type="primary" @click="addOrUpdateMenu">确 定</el-button>
       </span>
     </el-dialog>
 
@@ -95,6 +164,9 @@
 </template>
 
 <script>
+import Treeselect from '@riophae/vue-treeselect';
+import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+import IconSelect from '@/components/IconSelect';
 export default {
   name: 'MenuManage',
   data() {
@@ -112,11 +184,56 @@ export default {
         },
       ],
 
+      //应用类型选项
+      applicationOptions: [
+        {
+          value: 'SPS',
+          label: 'SPS',
+        },
+        {
+          value: 'ECM',
+          label: 'ECM',
+        },
+        {
+          value: 'FGAP',
+          label: 'FGAP',
+        },
+        {
+          value: 'PPM',
+          label: 'PPM',
+        },
+        {
+          value: 'DPM',
+          label: 'DPM',
+        },
+      ],
+
+      //校验规则
+      rules: {
+        applicationId: [{ required: true, message: '请选择部门', trigger: 'change' }],
+        menuParentId: [{ required: true, message: '请选择上级菜单', trigger: 'change' }],
+        menuName: [{ required: true, message: '请输入菜单名称', trigger: 'change' }],
+        routingPath: [{ required: true, message: '请输入路由地址', trigger: 'change' }],
+        componentPath: [{ required: true, message: '请输入组件路径', trigger: 'change' }],
+        menuWeight: [{ required: true, message: '请选择菜单权重', trigger: 'change' }],
+      },
+
       //新增或编辑弹窗
-      addOrUpdateData: {},
+      addOrUpdateData: {
+        applicationId: '',
+        menuParentId: '',
+        menuName: '',
+        routingPath: '',
+        componentPath: '',
+        status: 1,
+        menuIcon: '',
+        showStatus: 1,
+        menuWeight: 0,
+      },
       addOrUpdateDialog: false,
       isAdding: false,
       addOrUpdateTitle: '新增',
+      treeList: [],
 
       //删除弹窗
       deleteDialog: false,
@@ -130,6 +247,11 @@ export default {
     };
   },
 
+  components: {
+    Treeselect,
+    IconSelect,
+  },
+
   watch: {
     searchText: {
       handler() {
@@ -141,6 +263,7 @@ export default {
 
   mounted() {
     this.getMenuList();
+    this.getMenuTree();
   },
 
   methods: {
@@ -150,6 +273,18 @@ export default {
         .getMenuList(this.searchText)
         .then(res => {
           this.tableData = res.data.data || [];
+        })
+        .catch(err => {
+          this.$msg(err.data);
+        });
+    },
+
+    //获取菜单树形列表
+    getMenuTree() {
+      this.$API
+        .getMenuList()
+        .then(res => {
+          this.treeList = res.data.data || [];
         })
         .catch(err => {
           this.$msg(err.data);
@@ -172,15 +307,77 @@ export default {
         });
     },
 
+    //新增或编辑菜单
+    addOrUpdateMenu() {
+      if (this.addOrUpdateData.menuParentId == '' || this.addOrUpdateData.menuParentId == undefined) {
+        this.addOrUpdateData.menuParentId = 0;
+      }
+      this.$refs.addOrUpdateDialog.validate(valid => {
+        return valid ? (this.isAdding ? this.addMenu(this.addOrUpdateData) : this.updateMenu(this.addOrUpdateData)) : false;
+      });
+    },
+
+    //新增接口
+    addMenu(data) {
+      this.$API
+        .addMenu(data)
+        .then(res => {
+          this.$msg(res.data);
+        })
+        .catch(err => {
+          this.$msg(err.data);
+        })
+        .finally(() => {
+          this.addOrUpdateDialog = false;
+          this.getMenuList();
+        });
+    },
+
+    //编辑接口
+    updateMenu(data) {
+      this.$API
+        .updateMenu(data)
+        .then(res => {
+          this.$msg(res.data);
+        })
+        .catch(err => {
+          this.$msg(err.data);
+        })
+        .finally(() => {
+          this.addOrUpdateDialog = false;
+          this.getMenuList();
+        });
+    },
+
     //新增或编辑弹窗的关闭回调
     handleClose() {
       this.addOrUpdateDialog = false;
+      this.addOrUpdateData = {
+        applicationId: '',
+        menuParentId: '',
+        menuName: '',
+        routingPath: '',
+        componentPath: '',
+        status: 1,
+        menuIcon: '',
+        menuWeight: 0,
+      };
       this.$refs.addOrUpdateDialog.resetFields();
+      this.getMenuList();
     },
 
     //清空搜索条件
     clearSearchText() {
       this.searchText = {};
+    },
+
+    //对数据进行提前处理
+    normalizer(node) {
+      return {
+        id: node.id,
+        label: node.menuName,
+        children: node.children,
+      };
     },
 
     //新增弹出框
@@ -195,13 +392,14 @@ export default {
       this.addOrUpdateDialog = true;
       this.addOrUpdateTitle = '编辑';
       this.isAdding = false;
-      this.addOrUpdateData = row;
+      this.addOrUpdateData = JSON.parse(JSON.stringify(row));
+      this.addOrUpdateData.menuParentId == 0 ? (this.addOrUpdateData.menuParentId = '') : '';
     },
 
     //删除弹出框
     showDelete(row) {
       this.deleteDialog = true;
-      this.curMenu = row;
+      this.curMenu = JSON.parse(JSON.stringify(row));
     },
 
     //取消删除
@@ -214,6 +412,11 @@ export default {
     //确认删除
     confirmDelete() {
       this.deleteMenu(this.curMenu);
+    },
+
+    //选择图标
+    handleSelect(name) {
+      this.addOrUpdateData.menuIcon = name;
     },
   },
 };
@@ -279,6 +482,81 @@ export default {
     align-items: center;
     margin-top: 30px;
     width: 100%;
+  }
+
+  .dialog_body {
+    width: 100%;
+    .form {
+      display: flex;
+      justify-content: start;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      .form_item {
+        width: 48%;
+        margin: 1%;
+        display: inline-block;
+      }
+      .form_number {
+        width: 48%;
+        margin: 1%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        flex-direction: column;
+        /deep/ .el-input-number {
+          width: 100%;
+        }
+      }
+      .form_item_title {
+        width: 98%;
+        margin: 1%;
+      }
+      .form_icon {
+        width: 98%;
+        margin: 1%;
+        .el-form-item__content {
+          width: 100%;
+          .flex {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /deep/ .el-button {
+              margin-right: 10px;
+            }
+          }
+        }
+      }
+
+      .radio_form {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        flex-direction: column;
+        width: 48%;
+        margin: 1%;
+      }
+      /deep/ .vue-treeselect__control {
+        height: 42px;
+        box-sizing: border-box;
+        .vue-treeselect__multi-value {
+          height: 42px;
+          margin: 0;
+          .vue-treeselect__multi-value-item-container {
+            position: relative;
+            height: 42px;
+            margin: 0 4px;
+            padding: 0;
+            .vue-treeselect__multi-value-item {
+              position: relative;
+              height: 42px;
+              padding: 0;
+            }
+          }
+        }
+      }
+    }
   }
 }
 </style>

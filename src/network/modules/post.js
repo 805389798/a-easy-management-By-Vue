@@ -21,3 +21,8 @@ export function deletePost(params) {
 export function getPost(params) {
   return axios.get(`${base.current}/sys/post/getInfo`, { params: params });
 }
+
+//查询岗位
+export function getPostTree() {
+  return axios.get(`${base.current}/sys/post/getTreeStructure`);
+}

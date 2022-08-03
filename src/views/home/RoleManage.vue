@@ -54,7 +54,13 @@
 
     <!-- 表格区域 -->
     <div class="table_field">
-      <el-table :data="tableData" style="width: 100%;" height="calc(100vh - 460px)" :header-cell-style="{ background: '#F0F0F0', color: '#333333' }">
+      <el-table
+        :show-overflow-tooltip="true"
+        :data="tableData"
+        style="width: 100%;"
+        height="calc(100vh - 460px)"
+        :header-cell-style="{ background: '#F0F0F0', color: '#333333' }"
+      >
         <el-table-column type="selection" width="50" align="center"></el-table-column>
         <el-table-column fixed type="index" label="序号" width="80"></el-table-column>
         <el-table-column prop="roleName" label="角色名称" width="120">
@@ -147,7 +153,7 @@
           </el-form-item>
 
           <el-form-item prop="status" label="状态" class="form_item">
-            <el-radio-group v-model="addOrUpdateData.status" class="radio_group" style="width:100%;">
+            <el-radio-group v-model="addOrUpdateData.status"  style="width:100%;">
               <el-radio :label="0"><span>禁用</span></el-radio>
               <el-radio :label="1"><span>启用</span></el-radio>
             </el-radio-group>
@@ -175,9 +181,10 @@
       </div>
     </el-dialog>
 
+    <!-- 菜单弹窗 -->
     <el-dialog :title="menuTitle" :visible.sync="menuDialog" width="60%" :close-on-click-modal="false" @close="handleCloseMenu">
       <div class="dialog_body">
-        <el-tree :data="menuOptions" :props="props" show-checkbox @check-change="handleCheckChange"></el-tree>
+        <el-tree ref="tree" empty-text="暂无数据" :default-expand-all="true" node-key="id" :data="menuOptions" :props="props" show-checkbox></el-tree>
       </div>
       <span slot="footer" class="dialog_footer">
         <el-button @click="menuDialog = false">取 消</el-button>
@@ -253,7 +260,7 @@ export default {
         applicationId: '',
         roleName: '',
         roleCode: '',
-        status: 0,
+        status: 1,
         roleRemark: '',
       },
       addOrUpdateTitle: '新增',
@@ -267,6 +274,7 @@ export default {
       //菜单弹窗
       menuTitle: '菜单权限',
       menuDialog: false,
+      curMenu: {},
 
       //搜索
       searchText: {
@@ -324,11 +332,8 @@ export default {
 
     //获取菜单列表
     getMenuList() {
-      let data = {
-        status: 1,
-      };
       this.$API
-        .getMenuList(data)
+        .getMenuTree()
         .then(res => {
           this.menuOptions = res.data.data;
         })
@@ -398,7 +403,7 @@ export default {
         applicationId: '',
         roleName: '',
         roleCode: '',
-        status: 0,
+        status: 1,
         roleRemark: '',
       };
       this.$refs.addOrUpdateDialog.resetFields();
@@ -421,7 +426,7 @@ export default {
     showUpdate(row) {
       this.addOrUpdateDialog = true;
       this.addOrUpdateTitle = '编辑';
-      this.addOrUpdateData = row;
+      this.addOrUpdateData = JSON.parse(JSON.stringify(row));
       this.isAdding = false;
     },
 
@@ -444,21 +449,44 @@ export default {
     },
 
     //确认修改菜单权限
-    updateMenu() {},
+    updateMenu() {
+      let checkList = this.$refs.tree.getCheckedNodes();
+      let menuIds = [];
+      for (let item of checkList) {
+        menuIds.push(item.id);
+      }
+      let data = {
+        roleId: this.curMenu.id,
+        menuIds,
+      };
+
+      this.$API
+        .updateRoleRelationMenu(data)
+        .then(res => {
+          this.$msg(res.data);
+        })
+        .catch(err => {
+          this.$msg(err.data);
+        })
+        .finally(() => {
+          this.menuDialog = false;
+          this.getRoleInfo();
+        });
+    },
 
     //显示菜单权限框
     showMenu(row) {
+      this.curMenu = JSON.parse(JSON.stringify(row));
       this.menuDialog = true;
-    },
-
-    //选择菜单选项
-    handleCheckChange (data, checked, indeterminate) {
-      console.log(data, checked, indeterminate);
+      this.$nextTick(() => {
+        this.$refs.tree.setCheckedKeys(this.curMenu.menuIds);
+      });
     },
 
     //菜单弹出框的关闭回调
     handleCloseMenu() {
       this.menuDialog = false;
+      this.curMenu = {};
     },
 
     //设置每页多少条数据

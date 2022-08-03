@@ -21,3 +21,8 @@ export function deleteDepartment(params) {
 export function getDepartment(params) {
   return axios.get(`${base.current}/sys/department/getParentList`, { params, params });
 }
+
+//查询部门树形结构
+export function getDepartmentTree() {
+  return axios.get(`${base.current}/sys/department/getTreeStructure`);
+}

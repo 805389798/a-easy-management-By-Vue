@@ -26,3 +26,8 @@ export function getRole(params) {
 export function updateRoleRelationMenu(params) {
   return axios.post(`${base.current}/sys/role/updateRoleRelationMenu`, JSON.stringify(params));
 }
+
+//分页查询角色
+export function getRoleTree() {
+  return axios.get(`${base.current}/sys/role/getTreeStructure`);
+}
